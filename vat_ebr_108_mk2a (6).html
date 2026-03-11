@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vatican MS Ebr. 108 — Moed Katan 2a</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #faf8f4; font-family: Georgia, "Times New Roman", serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f0ece4; }
+    ::-webkit-scrollbar-thumb { background: #c0b090; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+var EXTRA_PAD = 60;
+
+function expandUrl(url) {
+  var m = url.match(/(.+\.jp2\/)(\d+),(\d+),(\d+),(\d+)(\/full\/0\/default\.jpg)/);
+  if (!m) return url;
+  var x = Math.max(0, parseInt(m[2]) - EXTRA_PAD);
+  var y = Math.max(0, parseInt(m[3]) - EXTRA_PAD);
+  var w = parseInt(m[4]) + EXTRA_PAD * 2;
+  var h = parseInt(m[5]) + EXTRA_PAD * 2;
+  return m[1] + x + ',' + y + ',' + w + ',' + h + m[6];
+}
+
+function openFullPageWithHighlight(url) {
+  var m = url.match(/\.jp2\/(\d+),(\d+),(\d+),(\d+)\/full\/0\/default\.jpg/);
+  if (!m) return;
+  var cx = parseInt(m[1]), cy = parseInt(m[2]), cw = parseInt(m[3]), ch = parseInt(m[4]);
+  var fullImg = url.replace(/\.jp2\/.+\/full\/0\/default\.jpg/, '.jp2/full/full/0/default.jpg');
+  var lines = [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Folio View<\/title>',
+    '<style>',
+    'body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:16px;}',
+    'p{color:#aaa;font-family:sans-serif;font-size:12px;margin:0 0 8px;}',
+    '.w{position:relative;display:inline-block;}',
+    'img{display:block;max-width:88vw;cursor:zoom-out;}',
+    'svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}',
+    '<\/style><\/head><body>',
+    '<p>Click image to close &nbsp;&middot;&nbsp; Word highlighted in red<\/p>',
+    '<div class="w">',
+    '<img id="img" src="' + fullImg + '" referrerpolicy="no-referrer" onclick="window.close()">',
+    '<svg id="svg"><\/svg><\/div>',
+    '<script>',
+    'var C={x:' + cx + ',y:' + cy + ',w:' + cw + ',h:' + ch + '};',
+    'function draw(){',
+    '  var i=document.getElementById("img"),s=document.getElementById("svg");',
+    '  var sx=i.clientWidth/i.naturalWidth,sy=i.clientHeight/i.naturalHeight;',
+    '  var r=document.createElementNS("http://www.w3.org/2000/svg","rect");',
+    '  r.setAttribute("x",C.x*sx);r.setAttribute("y",C.y*sy);',
+    '  r.setAttribute("width",C.w*sx);r.setAttribute("height",C.h*sy);',
+    '  r.setAttribute("fill","rgba(255,50,50,0.18)");',
+    '  r.setAttribute("stroke","red");r.setAttribute("stroke-width","2.5");',
+    '  r.setAttribute("rx","3");s.innerHTML="";s.appendChild(r);',
+    '}',
+    'document.getElementById("img").onload=draw;',
+    'window.addEventListener("resize",draw);',
+    '<\/script><\/body><\/html>'
+  ];
+  var html = lines.join('\n');
+  var blob = new Blob([html], {type: 'text/html'});
+  window.open(URL.createObjectURL(blob), '_blank');
+}
+  </script>
+  <script type="text/babel">
+    const { useState } = React;
+
+// ─── IIIF WORD IMAGE COORDINATES ─────────────────────────────────────────────
+const COORDS = {
+  "seg1__השלחים":   { folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/692,1316,149,107/full/0/default.jpg" },
+  "seg1__השלדים":   { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1238,333,160,108/full/0/default.jpg" },
+  "seg1__כתחילה":  { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1471,523,155,101/full/0/default.jpg" },
+  "seg1__בתחילה":  { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/485,345,146,132/full/0/default.jpg" },
+  "seg1__לגנינים": { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1245,466,138,117/full/0/default.jpg" },
+  "seg1__שברשות":  { folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/728,356,139,102/full/0/default.jpg" },
+  "seg1__שבדשות":  { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/431,602,167,101/full/0/default.jpg" },
+  "seg2__ממעיין":  { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/741,343,138,126/full/0/default.jpg" },
+  "seg2__מומעיין": { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1182,318,157,104/full/0/default.jpg" },
+  "seg2__גשמים":   { folio:"0097r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0197_fa_0097r.jp2/1207,492,121,111/full/0/default.jpg" },
+  "seg2__נשמים":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1067,365,138,117/full/0/default.jpg" },
+  "seg2__עוגיות":  { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1388,465,112,109/full/0/default.jpg" },
+  "seg2__עיניות":  { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1778,443,117,104/full/0/default.jpg" },
+  "seg2__במועד":   { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1117,347,124,96/full/0/default.jpg" },
+  "seg2__בכולעד":  { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/538,447,133,92/full/0/default.jpg" },
+  "seg3__מעיין":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1522,605,117,112/full/0/default.jpg" },
+  "seg3__מעיק":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1052,549,104,108/full/0/default.jpg" },
+  "seg3__כתחלה":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1161,667,139,112/full/0/default.jpg" },
+  "seg3__הכם":     { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/914,667,79,107/full/0/default.jpg" },
+  "seg3__לאינפולי":{ folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/507,560,161,96/full/0/default.jpg" },
+  "seg3__לאינכולי":{ folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1070,725,175,123/full/0/default.jpg" },
+  "seg4__ומאי":    { folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/282,1670,105,109/full/0/default.jpg" },
+  "seg4__נמאי":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1796,930,100,104/full/0/default.jpg" },
+  "seg4__לישנא":   { folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/1022,526,116,114/full/0/default.jpg" },
+  "seg4__לישוא":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1232,923,123,112/full/0/default.jpg" },
+  "seg4__רצחותא": { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1069,925,158,110/full/0/default.jpg" },
+  "seg4__והוא":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1811,996,88,104/full/0/default.jpg" },
+  "seg4__והנא":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/813,941,88,95/full/0/default.jpg" },
+  "seg5__דכסירא":  { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1501,1107,148,116/full/0/default.jpg" },
+  "seg5__לאילן":   { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/664,779,121,118/full/0/default.jpg" },
+  "seg5__שבועת":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/685,1305,142,111/full/0/default.jpg" },
+  "seg6__פפא":     { folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1419,1504,86,108/full/0/default.jpg" },
+  "seg6__ספא":     { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1703,1366,83,104/full/0/default.jpg" },
+  "seg6__מאיר":    { folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/517,317,104,126/full/0/default.jpg" },
+  "seg6__מואית":   { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1132,1374,108,101/full/0/default.jpg" },
+  "seg6__יננה":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/789,1501,89,115/full/0/default.jpg" },
+  "seg6__המים":    { folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/602,604,96,109/full/0/default.jpg" },
+  "seg6__הטים":    { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/513,1499,88,116/full/0/default.jpg" },
+  "seg7__מעייבא":  { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1594,1689,137,101/full/0/default.jpg" },
+  "seg7__מתניתין": { folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1165,1319,153,104/full/0/default.jpg" },
+  "seg7__מתנותין": { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1272,1867,170,114/full/0/default.jpg" },
+  "seg7__לאינפולי":{ folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/507,560,161,96/full/0/default.jpg" },
+  // seg4.2 merged two-word HTR crop (לישוא רצחותא)
+  "seg4__לישוא_רצחותא": { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1064,903,311,132/full/0/default.jpg" },
+  // seg4.4 merged two-word HTR crop (וכותר גבויני)
+  "seg4__וכותר_גבויני":  { folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/522,922,215,119/full/0/default.jpg" },
+};
+
+const SEGMENTS = [
+  {
+    id:"seg1", label:"Seg 1", ref:"102110021_1_13",
+    v108:   "משקין בית השלחים במועד ובשביעית בין ממעיין שיצא בתחילה ובין ממעיין שלא יצא בתחילה אבל אין משקין לא ממי הגשמים ולא ממי הקילון ואין עושין עוגיות לגפנים ומתקנין את המקולקלת במועד ואת קילקולי המים שברשות הרבים",
+    htr:    "משקין בית השלדים במועד ובשביעית בין ממעיין שיצא בתחילה ובין ממעיין שלא יצא בתחילה אבל אין משקין לא ממי הגשמים ולא ממי הקילון ואין עושין עוגיות לגנינים ומתקנין את המקולקלת במועד ואת קילקולי המים שבדשות הרבים",
+    sefaria:"משקין בית השלחין במועד ובשביעית בין ממעיין שיצא בתחילה בין ממעיין שלא יצא בתחילה אבל אין משקין לא ממי גשמים ולא ממי קילון ואין עושין עוגיות לגפנים מתקנין את המקולקלת במועד ומתקנין את קילקולי המים שברשות הרבים",
+    diffs:[
+      { v108:"השלחים",  htr:"השלדים",   sef:"השלחין",  cat:"", notes:"" },
+      { v108:"כתחילה",  htr:"בתחילה",   sef:"בתחילה",  cat:"", notes:"" },
+      { v108:"לגפנים",  htr:"לגנינים",  sef:"לגפנים",  cat:"", notes:"", v108k:null },
+      { v108:"שברשות",  htr:"שבדשות",   sef:"שברשות",  cat:"", notes:"" },
+    ]
+  },
+  {
+    id:"seg2", label:"Seg 2", ref:"102110021_14",
+    v108:   "ר׳ אלעזר בן עזריה אומר אין עושין את האמה כתחילה במועד ובשביעית ואין עושין עוגיות לגפנים ואין משקין ממעיין שיצא בתחילה ולא ממי הגשמים ולא ממי קילון במועד",
+    htr:    "ר׳ אלעזר בן עזריה אומר אין עושין את האמה בא הש במועד ובשביעית ואין עושין עיניות לנפנים ואין משקין מומעיין שיוצא כתחילה ולא ממי נשמים ולא ממי קולון בכולעד",
+    sefaria:"ר׳ אלעזר בן עזריה אומר אין עושין את האמה בתחילה לא במועד ולא בשביעית",
+    diffs:[
+      { v108:"ממעיין",         htr:"מומעיין",        sef:"",  cat:"", notes:"" },
+      { v108:"גשמים",          htr:"נשמים",           sef:"",   cat:"", notes:"" },
+      { v108:"עוגיות לגפנים", htr:"עיניות לנפנים",  sef:"",  cat:"", notes:"", v108k:"seg2__עוגיות", htrk:"seg2__עיניות" },
+      { v108:"במועד",          htr:"בכולעד",          sef:"במועד",   cat:"", notes:"" },
+    ]
+  },
+  {
+    id:"seg3", label:"Seg 3", ref:"102110021_14_23",
+    v108:   "השתא יש לעיין מה מעיין שיצא כתחלה משקין ממנו שדה בית הבעל לא והאי דקתני מעיין שיצא לכתחלה להודיעך כחו דר׳ מאיר שאמר מעיין היוצא לכתחלה משקין ממנו אף שדה בית הבעל נמי ונימא הכהא ומאי לאינפולי",
+    htr:    "השתא יש לעיין מה מעיק שיצא כתח לה משקין ממנו שדה בית הבעל לא והאי דקתני מעיין שיצא לכתחלה להודיעך כחו דר׳ מאיר שאמר מעיין היוצא לכתחלה משקין ממנו אף שדה בית הבעל נמי ונימא הכם ומאי לאינכולי",
+    sefaria:"השתא יש לעיין מה מעיין שיצא בתחילה משקין ממנו אף שדה בית הבעל",
+    diffs:[
+      { v108:"מעיין",    htr:"מעיק",      sef:"מעיין",   cat:"", notes:"" },
+      { v108:"כתחלה",    htr:"כתח לה",    sef:"בתחילה",  cat:"", notes:"" },
+      { v108:"הכהא",     htr:"הכם",        sef:"",        cat:"", notes:"", v108k:null },
+      { v108:"לאינפולי", htr:"לאינכולי",  sef:"",        cat:"", notes:"" },
+    ]
+  },
+  {
+    id:"seg4", label:"Seg 4", ref:"102110021_24_30",
+    v108:   "ומאי לישנא דצחותא כלומר לשון נקיה והוא דאמר ומתרגמינן אותו",
+    htr:    "נמאי לישוא רצחותא כלומר לשון נקיה והנא דאמר וכותר גבויני אותו",
+    sefaria:"ומאי לישנא דצחותא לשון נקיה והוא דאמרינן ומתרגמינן",
+    diffs:[
+      { v108:"ומאי",          htr:"נמאי",         sef:"ומאי",          cat:"", notes:"" },
+      { v108:"לישנא דצחותא", htr:"לישוא רצחותא", sef:"לישנא דצחותא", cat:"", notes:"", v108k:"seg4__לישנא", htrk:"seg4__לישוא_רצחותא" },
+      { v108:"והוא",          htr:"והנא",          sef:"והוא",          cat:"", notes:"" },
+      { v108:"ומתרגמינן",    htr:"וכותר גבויני",  sef:"ומתרגמינן",    cat:"", notes:"", v108k:null, htrk:"seg4__וכותר_גבויני" },
+    ]
+  },
+  {
+    id:"seg5", label:"Seg 5", ref:"102110021_30_36",
+    v108:   "שמא דפסידא הוא לאילן ולאו היינו דאמרת את כל השדה שמעת מינה",
+    htr:    "שמא דכסירא הוא לא ילן ולאו היינו דאמרת אתם לחשרה שבועת מינה",
+    sefaria:"לאילן כי היכי דלא ליפסד",
+    diffs:[
+      { v108:"דפסידא",      htr:"דכסירא",      sef:"ליפסד",  cat:"", notes:"", v108k:null },
+      { v108:"לאילן",       htr:"לא ילן",       sef:"לאילן",  cat:"", notes:"", htrk:null },
+      { v108:"את כל השדה", htr:"אתם לחשרה",   sef:"",        cat:"", notes:"", v108k:null, htrk:null },
+      { v108:"שמעת",        htr:"שבועת",        sef:"",        cat:"", notes:"", v108k:null },
+    ]
+  },
+  {
+    id:"seg6", label:"Seg 6", ref:"102110021_36_42",
+    v108:   "אמר רב פפא לא שנו אלא ר׳ מאיר וממנו אפלו שדה בית הבעל לא יפנה שיצא המים",
+    htr:    "אמר רב ספא לא שנו אלא ר׳ מואית וממם שדה בית הבעל לא יננה שיצא הטים",
+    sefaria:"אמר רב פפא לא שנו אלא ר׳ מאיר אבל ממנו אפילו שדה בית הבעל מותר המים",
+    diffs:[
+      { v108:"פפא",       htr:"ספא",      sef:"פפא",          cat:"", notes:"" },
+      { v108:"מאיר",      htr:"מואית",    sef:"",          cat:"", notes:"" },
+      { v108:"ממנו אפלו", htr:"ממם",      sef:"ממנו אפילו",   cat:"", notes:"", v108k:null, htrk:null },
+      { v108:"יפנה",      htr:"יננה",     sef:"",              cat:"", notes:"", v108k:null },
+      { v108:"המים",      htr:"הטים",     sef:"המים",          cat:"", notes:"" },
+    ]
+  },
+  {
+    id:"seg7", label:"Seg 7", ref:"102110021_42_45",
+    v108:   "מעיינא ממעיין לאינפולי מתניתין",
+    htr:    "מעייבא טובועין לא נפולי מתנותין",
+    sefaria:"מעיינא ממעיין לאיניפולי מתניתין",
+    diffs:[
+      { v108:"מעיינא",   htr:"מעייבא",   sef:"מעיינא",    cat:"", notes:"", v108k:null },
+      { v108:"ממעיין",   htr:"טובועין",  sef:"ממעיין",    cat:"", notes:"", v108k:"seg2__ממעיין", htrk:null },
+      { v108:"לאינפולי", htr:"לא נפולי", sef:"לאיניפולי", cat:"", notes:"", htrk:null },
+      { v108:"מתניתין",  htr:"מתנותין",  sef:"מתניתין",   cat:"", notes:"" },
+    ]
+  },
+];
+
+const ERROR_CATS = ["","Similar letterform","Misread","Deletion","Insertion","Letter transposition","Context error","Resolution issue","Other"];
+
+const C = {
+  bg:       "#f5f1eb",
+  bgAlt:    "#faf8f4",
+  border:   "#d8cfc0",
+  borderDk: "#bfb49e",
+  hdrBg:    "#ede8df",
+  v108Bg:   "#f0f5f0",
+  v108Hdr:  "#e4efe4",
+  v108Text: "#1a3a1a",
+  v108Acc:  "#2d6e2d",
+  htrBg:    "#fdf6ee",
+  htrHdr:   "#f2e8d8",
+  htrText:  "#3a2800",
+  htrAcc:   "#7a4e00",
+  sefBg:    "#eef3f8",
+  sefHdr:   "#dce8f0",
+  sefText:  "#0a2040",
+  sefAcc:   "#1a5080",
+  diffHdr:  "#e8e3db",
+  diffRow:  "#fdfcfa",
+  diffAlt:  "#f5f0e8",
+  annotBg:  "#fffef8",
+  text:     "#2a2010",
+  textMid:  "#6a5a40",
+  textDim:  "#9a8a70",
+  hlYellow: "#fffacc",
+  shadow:   "rgba(80,60,20,0.10)",
+};
+
+// ─── MS IMAGE PANEL ──────────────────────────────────────────────────────────
+// expandUrl and openFullPageWithHighlight are defined in the plain <script> block
+function MSButton({ v108CoordKey, htrCoordKey }) {
+  const [open, setOpen] = useState(false);
+  const data = (htrCoordKey ? COORDS[htrCoordKey] : null)
+            || (v108CoordKey ? COORDS[v108CoordKey] : null);
+  if (!data) return null;
+  const expandedUrl = expandUrl(data.url);
+  return (
+    <div style={{marginTop:"4px"}}>
+      <div style={{display:"flex", gap:"4px"}}>
+        <button onClick={() => setOpen(o => !o)} style={{
+          fontSize:"10px", padding:"2px 8px",
+          border:`1px solid ${C.borderDk}`, borderRadius:"3px",
+          background: open ? C.hdrBg : "white",
+          color:C.sefAcc, cursor:"pointer",
+          lineHeight:"1.6", fontFamily:"Georgia,serif",
+        }}>
+          📷 {open ? "Hide Image" : "View Word Image"}
+        </button>
+        <button onClick={() => openFullPageWithHighlight(data.url)} style={{
+          fontSize:"10px", padding:"2px 8px",
+          border:`1px solid ${C.borderDk}`, borderRadius:"3px",
+          background:"white", color:C.textMid, cursor:"pointer",
+          lineHeight:"1.6", fontFamily:"Georgia,serif",
+        }} title={`Open full folio f.${data.folio}`}>
+          📄 Full Page
+        </button>
+      </div>
+      {open && (
+        <div style={{
+          marginTop:"6px", border:`1px solid ${C.borderDk}`,
+          borderRadius:"4px", overflow:"hidden",
+          background:"#f8f4ec", textAlign:"center",
+          boxShadow:`0 2px 6px ${C.shadow}`,
+          padding:"6px",
+        }}>
+          <img
+            src={expandedUrl}
+            alt={`Manuscript word f.${data.folio}`}
+            style={{
+              maxWidth:"100%", maxHeight:"160px",
+              border:`1px solid ${C.border}`,
+              borderRadius:"2px",
+              display:"block", margin:"0 auto",
+            }}
+            onError={e => {
+              e.target.style.display = "none";
+              e.target.nextSibling.style.display = "block";
+            }}
+          />
+          <div style={{display:"none", fontSize:"10px", color:"#c44", padding:"4px"}}>
+            Could not load image — <a href={expandedUrl} target="_blank" rel="noopener noreferrer"
+              style={{color:C.sefAcc}}>open directly ↗</a>
+          </div>
+          <div style={{fontSize:"9px", color:C.textDim, padding:"2px 0 0"}}>
+            Vat. Ebr. 108 · f.{data.folio}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getCoordKey(segId, diff, side) {
+  const expl = side==="v108" ? diff.v108k : diff.htrk;
+  if (expl === null) return null;
+  if (expl !== undefined) return expl;
+  return `${segId}__${side==="v108" ? diff.v108 : diff.htr}`;
+}
+
+// Returns agreement status for each column: "agree" | "outlier" | "neutral"
+function getAgreement(v108, htr, sef) {
+  const norm = s => (s||"").trim().replace(/\s+/g," ");
+  const v = norm(v108), h = norm(htr), s = norm(sef);
+  if (!s) return { v108:"neutral", htr:"neutral", sef:"neutral" };
+  if (v === h && h === s) return { v108:"neutral", htr:"neutral", sef:"neutral" };
+  if (v === h && v !== s) return { v108:"agree",   htr:"agree",   sef:"outlier" };
+  if (v === s && v !== h) return { v108:"agree",   htr:"outlier", sef:"agree"   };
+  if (h === s && h !== v) return { v108:"outlier", htr:"agree",   sef:"agree"   };
+  return { v108:"neutral", htr:"neutral", sef:"neutral" };
+}
+
+// ─── SEGMENT BLOCK ────────────────────────────────────────────────────────────
+function SegBlock({ seg, annotations, setAnnotations }) {
+  const [open, setOpen] = useState(true);
+  const [showDiff, setShowDiff] = useState(true);
+
+  const annCount = seg.diffs.filter((_,i)=>{
+    const a = annotations[`${seg.id}_${i}`];
+    return a?.cat || a?.notes || a?.correct;
+  }).length;
+
+  const set = (i,field,val) => {
+    const k=`${seg.id}_${i}`;
+    setAnnotations(prev=>({...prev,[k]:{...(prev[k]||{}),[field]:val}}));
+  };
+
+  const hFont = {fontFamily:"'SBL Hebrew','Ezra SIL',David,serif",fontSize:"15.5px",lineHeight:"2",direction:"rtl",textAlign:"right"};
+
+  return (
+    <div style={{
+      marginBottom:"20px",
+      border:`1px solid ${C.border}`,
+      borderRadius:"6px",
+      overflow:"hidden",
+      boxShadow:`0 2px 8px ${C.shadow}`,
+      background:C.bg,
+    }}>
+      {/* ── Segment header ── */}
+      <div onClick={()=>setOpen(o=>!o)} style={{
+        display:"flex",alignItems:"center",justifyContent:"space-between",
+        padding:"9px 16px",background:C.hdrBg,cursor:"pointer",
+        borderBottom: open ? `1px solid ${C.border}` : "none",
+        userSelect:"none",
+      }}>
+        <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
+          <span style={{
+            background:"#2d6e2d",color:"#fff",
+            borderRadius:"11px",padding:"2px 10px",fontSize:"11px",fontWeight:"600",
+          }}>{seg.label}</span>
+          <span style={{color:C.textMid,fontSize:"11px",fontFamily:"monospace"}}>{seg.ref}</span>
+          <span style={{color:C.textDim,fontSize:"11px"}}>{seg.diffs.length} diffs</span>
+          {annCount>0 && (
+            <span style={{
+              background:"#e8f4e8",color:"#2d6e2d",border:"1px solid #a8d4a8",
+              borderRadius:"8px",padding:"1px 8px",fontSize:"10px",
+            }}>✓ {annCount} classified</span>
+          )}
+        </div>
+        <div style={{display:"flex",gap:"8px",alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+          <button onClick={()=>setShowDiff(s=>!s)} style={{
+            background:"white",color:C.textMid,border:`1px solid ${C.border}`,
+            borderRadius:"4px",padding:"3px 9px",fontSize:"10px",cursor:"pointer",
+          }}>{showDiff?"Hide diff":"Show diff"}</button>
+          <span style={{color:C.textDim,fontSize:"12px"}}>{open?"▲":"▼"}</span>
+        </div>
+      </div>
+
+      {open && (
+        <>
+          {/* ── THREE TEXT COLUMNS ── */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",borderBottom:`1px solid ${C.border}`}}>
+
+            {/* Column headers */}
+            {[
+              {label:"V108 Manual",           bg:C.v108Hdr, color:C.v108Acc},
+              {label:"V108 HTR (Kraken 5.3)",  bg:C.htrHdr,  color:C.htrAcc},
+              {label:"Sefaria (William Davidson)",   bg:C.sefHdr,  color:C.sefAcc},
+            ].map((col,ci)=>(
+              <div key={ci} style={{
+                padding:"7px 14px",background:col.bg,
+                borderRight: ci<2 ? `1px solid ${C.border}` : "none",
+                fontSize:"11px",color:col.color,fontWeight:"700",letterSpacing:"0.5px",
+              }}>{col.label}</div>
+            ))}
+
+            {/* Text bodies */}
+            <div style={{padding:"12px 16px",background:C.v108Bg,borderRight:`1px solid ${C.border}`,...hFont,color:C.v108Text}}>
+              {seg.v108}
+            </div>
+            <div style={{padding:"12px 16px",background:C.htrBg, borderRight:`1px solid ${C.border}`,...hFont,color:C.htrText}}>
+              {seg.htr}
+            </div>
+            <div style={{padding:"12px 16px",background:C.sefBg,...hFont,color:C.sefText}}>
+              {seg.sefaria}
+            </div>
+          </div>
+
+          {/* ── DIFF TABLE ── */}
+          {showDiff && (
+            <div>
+              {/* Diff table header */}
+              <div style={{
+                display:"grid",gridTemplateColumns:"32px 1fr 1fr 1fr 210px",
+                background:C.diffHdr,borderBottom:`1px solid ${C.border}`,
+                fontSize:"10px",color:C.textMid,fontWeight:"700",letterSpacing:"0.6px",
+              }}>
+                <div style={{padding:"5px 8px"}}>#</div>
+                <div style={{padding:"5px 10px",borderLeft:`1px solid ${C.border}`,color:C.v108Acc}}>V108</div>
+                <div style={{padding:"5px 10px",borderLeft:`1px solid ${C.border}`,color:C.htrAcc}}>HTR</div>
+                <div style={{padding:"5px 10px",borderLeft:`1px solid ${C.border}`,color:C.sefAcc}}>Sefaria</div>
+                <div style={{padding:"5px 10px",borderLeft:`1px solid ${C.border}`}}>הערה / קטגוריה</div>
+              </div>
+
+              {seg.diffs.map((d,i)=>{
+                const k=`${seg.id}_${i}`;
+                const ann=annotations[k]||{};
+                const ck_v = getCoordKey(seg.id,d,"v108");
+                const ck_h = getCoordKey(seg.id,d,"htr");
+                return (
+                  <div key={i} style={{
+                    display:"grid",gridTemplateColumns:"32px 1fr 1fr 1fr 210px",
+                    borderBottom:`1px solid ${C.border}`,
+                    background: ann.correct==='htr' ? '#f0fff0' : ann.correct==='manual' ? '#fffff0' : ann.cat ? C.hlYellow : (i%2===0 ? C.diffRow : C.diffAlt),
+                    transition:"background 0.15s",
+                  }}>
+                    <div style={{padding:"8px",color:C.textDim,fontSize:"11px",fontFamily:"monospace",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      borderRight:`1px solid ${C.border}`}}>
+                      {i+1}
+                    </div>
+
+                    {/* V108 */}
+                    {(()=>{
+                      const ag = getAgreement(d.v108, d.htr, d.sef);
+                      return (
+                    <div style={{padding:"7px 10px",borderRight:`1px solid ${C.border}`,
+                      display:"flex",flexDirection:"column",gap:"4px"}}>
+                      <div dir="rtl" style={{fontFamily:"'SBL Hebrew','Ezra SIL',serif",
+                        fontSize:"17px",lineHeight:"1.4",
+                        color: ag.v108==="outlier" ? "#c0392b" : C.v108Text,
+                        fontWeight: ag.v108==="agree" ? "bold" : "normal",
+                      }}>
+                        {d.v108}
+                      </div>
+                    </div>
+                      );
+                    })()}
+
+                    {/* HTR */}
+                    {(()=>{
+                      const ag = getAgreement(d.v108, d.htr, d.sef);
+                      return (
+                    <div style={{padding:"7px 10px",borderRight:`1px solid ${C.border}`,
+                      display:"flex",flexDirection:"column",gap:"4px"}}>
+                      <div dir="rtl" style={{fontFamily:"'SBL Hebrew','Ezra SIL',serif",
+                        fontSize:"17px",lineHeight:"1.4",
+                        color: ag.htr==="outlier" ? "#c0392b" : C.htrText,
+                        fontWeight: ag.htr==="agree" ? "bold" : "normal",
+                      }}>
+                        {d.htr}
+                      </div>
+                    </div>
+                      );
+                    })()}
+
+                    {/* Sefaria */}
+                    {(()=>{
+                      const ag = getAgreement(d.v108, d.htr, d.sef);
+                      return (
+                    <div style={{padding:"7px 10px",borderRight:`1px solid ${C.border}`,
+                      display:"flex",alignItems:"center"}}>
+                      <div dir="rtl" style={{fontFamily:"'SBL Hebrew','Ezra SIL',serif",
+                        fontSize:"16px",lineHeight:"1.4",
+                        color: ag.sef==="outlier" ? "#c0392b" : C.sefText,
+                        fontWeight: ag.sef==="agree" ? "bold" : "normal",
+                      }}>
+                        {d.sef||<span style={{color:C.textDim,fontSize:"11px"}}>—</span>}
+                      </div>
+                    </div>
+                      );
+                    })()}
+
+                    {/* Annotation */}
+                    <div style={{padding:"6px 8px",background:C.annotBg,
+                      display:"flex",flexDirection:"column",gap:"5px"}}>
+                      {/* Correct reading */}
+                      <div style={{display:"flex",gap:"0",marginBottom:"2px",border:`1px solid ${C.border}`,borderRadius:"4px",overflow:"hidden",fontSize:"10px"}}>
+                        {[["manual","V108 Manual",C.v108Acc],["htr","V108 HTR",C.htrAcc],["uncertain","Uncertain","#888"]].map(([val,label,col])=>(
+                          <button key={val} onClick={()=>set(i,"correct",ann.correct===val?"":val)}
+                            style={{
+                              flex:1,padding:"3px 2px",border:"none",cursor:"pointer",
+                              fontFamily:"Georgia,serif",fontSize:"10px",
+                              background: ann.correct===val ? col : "white",
+                              color: ann.correct===val ? "white" : C.textMid,
+                              borderRight: val!=="uncertain" ? `1px solid ${C.border}` : "none",
+                              fontWeight: ann.correct===val ? "bold" : "normal",
+                            }}>{label}</button>
+                        ))}
+                      </div>
+                      {/* Error type */}
+                      <select value={ann.cat||""} onChange={e=>set(i,"cat",e.target.value)}
+                        style={{
+                          background:"white",color:C.text,border:`1px solid ${C.border}`,
+                          borderRadius:"4px",fontSize:"10px",padding:"2px 5px",width:"100%",
+                        }}>
+                        {ERROR_CATS.map(c=><option key={c} value={c}>{c||"— Error type —"}</option>)}
+                      </select>
+                      <textarea
+                        placeholder="Researcher notes..."
+                        value={ann.notes||""}
+                        onChange={e=>set(i,"notes",e.target.value)}
+                        dir="rtl" rows={2}
+                        style={{
+                          background:"white",color:C.text,border:`1px solid ${C.border}`,
+                          borderRadius:"4px",fontSize:"11px",padding:"3px 6px",
+                          resize:"vertical",width:"100%",boxSizing:"border-box",
+                          fontFamily:"'SBL Hebrew','Ezra SIL',serif",
+                        }}
+                      />
+                      <MSButton v108CoordKey={ck_v} htrCoordKey={ck_h} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function doExport(annotations,segments) {
+  const rows=["Segment\tRef\t#\tV108\tHTR\tSefaria\tCorrect Reading\tCategory\tNotes"];
+  for(const seg of segments){
+    seg.diffs.forEach((d,i)=>{
+      const a=annotations[`${seg.id}_${i}`]||{};
+      if(a.cat||a.notes)
+        rows.push([seg.label,seg.ref,i+1,d.v108,d.htr,d.sef||"",a.correct||"",a.cat||"",a.notes||""].join("\t"));
+    });
+  }
+  const blob=new Blob([rows.join("\n")],{type:"text/tsv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="vat_ebr_108_mk2a_annotations.tsv";a.click();
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [annotations, setAnnotations] = useState({});
+
+  const total = SEGMENTS.reduce((n,s)=>n+s.diffs.length,0);
+  const done  = Object.values(annotations).filter(a=>a.cat||a.notes).length;
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bgAlt,color:C.text,
+      fontFamily:"Georgia,'Times New Roman',serif"}}>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        position:"sticky",top:0,zIndex:50,
+        background:"white",
+        borderBottom:`2px solid ${C.borderDk}`,
+        boxShadow:`0 2px 8px ${C.shadow}`,
+        padding:"12px 24px",
+      }}>
+        <div style={{maxWidth:"1320px",margin:"0 auto",
+          display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"10px"}}>
+          <div>
+            <div style={{fontSize:"10px",color:C.textDim,letterSpacing:"2px",textTransform:"uppercase",marginBottom:"3px"}}>
+              MiDRASH Project · ERC · EPHE-PSL Paris
+            </div>
+            <div style={{fontSize:"19px",color:C.text,fontWeight:"600"}}>
+              Vatican MS Ebr. 108 — Moed Katan 2a
+            </div>
+            <div dir="rtl" style={{fontSize:"13px",color:C.textMid,fontFamily:"'SBL Hebrew',serif",marginTop:"2px"}}>
+              Manual transcription (V108) · Automatic HTR · Sefaria edition
+            </div>
+          </div>
+          <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
+            <div style={{
+              background:"#e8f4e8",border:"1px solid #a8d4a8",borderRadius:"20px",
+              padding:"5px 14px",fontSize:"12px",color:"#2d6e2d",
+            }}>
+              {done} / {total} classified
+            </div>
+            <button onClick={()=>doExport(annotations,SEGMENTS)} style={{
+              background:"#2d6e2d",color:"white",border:"none",
+              borderRadius:"5px",padding:"7px 16px",fontSize:"12px",
+              cursor:"pointer",fontFamily:"inherit",fontWeight:"600",
+            }}>⬇ Export TSV</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── LEGEND ── */}
+      <div style={{maxWidth:"1320px",margin:"0 auto",padding:"14px 24px 4px"}}>
+        <div style={{
+          display:"flex",gap:"20px",flexWrap:"wrap",
+          background:"white",border:`1px solid ${C.border}`,borderRadius:"5px",
+          padding:"8px 16px",fontSize:"11px",color:C.textMid,
+          boxShadow:`0 1px 3px ${C.shadow}`,
+        }}>
+          <span><span style={{color:C.v108Acc,fontWeight:"bold"}}>■</span> V108 Manual transcription</span>
+          <span><span style={{color:C.htrAcc,fontWeight:"bold"}}>■</span> V108 HTR (Kraken 5.3)</span>
+          <span><span style={{color:C.sefAcc,fontWeight:"bold"}}>■</span> Sefaria (William Davidson)</span>
+          <span>📷 Buttons in annotation panel open word images in Vatican viewer</span>
+          <span><span style={{color:"#c0392b",fontWeight:"bold"}}>Red</span> = outlier · <span style={{fontWeight:"bold"}}>Bold</span> = two agree against one</span>
+          <span style={{color:"#888",fontStyle:"italic"}}>Images loaded directly from Vatican IIIF Image API — no proxy</span>
+        </div>
+      </div>
+
+      {/* ── SEGMENTS ── */}
+      <div style={{maxWidth:"1320px",margin:"0 auto",padding:"14px 24px 40px"}}>
+        {SEGMENTS.map(seg=>(
+          <SegBlock key={seg.id} seg={seg} annotations={annotations} setAnnotations={setAnnotations}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

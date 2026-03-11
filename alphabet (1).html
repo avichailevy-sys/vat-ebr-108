@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paleographic Alphabet — Vatican MS Ebr. 108</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #faf8f4;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #2a2010;
+    }
+
+    /* ── Header ── */
+    header {
+      background: white;
+      border-bottom: 2px solid #c0b090;
+      padding: 18px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(80,60,20,0.10);
+    }
+    header .sub {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9a8a70;
+      margin-bottom: 4px;
+    }
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2a2010;
+    }
+    header .desc {
+      font-size: 12px;
+      color: #6a5a3a;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .back-link {
+      font-size: 12px;
+      color: #2d6e2d;
+      text-decoration: none;
+      border: 1px solid #a8d4a8;
+      border-radius: 4px;
+      padding: 5px 12px;
+      background: #f0f5f0;
+    }
+    .back-link:hover { background: #e0f0e0; }
+
+    /* ── Legend ── */
+    .legend {
+      max-width: 1100px;
+      margin: 14px auto 0;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid #d8cfc0;
+      border-radius: 5px;
+      font-size: 11px;
+      color: #6a5a3a;
+      box-shadow: 0 1px 3px rgba(80,60,20,0.08);
+    }
+
+    /* ── Main table ── */
+    .container {
+      max-width: 1100px;
+      margin: 16px auto 40px;
+      padding: 0 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d8cfc0;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(80,60,20,0.10);
+    }
+
+    thead tr {
+      background: #ede8df;
+      border-bottom: 2px solid #c0b090;
+    }
+    thead th {
+      padding: 9px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6a5a3a;
+      letter-spacing: 0.6px;
+      text-align: left;
+    }
+    thead th.letter-col { text-align: center; width: 80px; }
+    thead th.name-col  { width: 110px; }
+
+    tbody tr {
+      border-bottom: 1px solid #e8e0d0;
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fdf9f4; }
+    tbody tr:hover { background: #f5f0e8; }
+
+    /* Final forms rows — subtle blue tint */
+    tbody tr.final { background: #f4f6fa; }
+    tbody tr.final:nth-child(even) { background: #eef1f7; }
+    tbody tr.final:hover { background: #e8ecf5; }
+
+    td {
+      padding: 10px 14px;
+      vertical-align: middle;
+    }
+
+    /* Letter cell */
+    td.letter-cell {
+      text-align: center;
+      font-family: "SBL Hebrew", "Ezra SIL", David, serif;
+      font-size: 32px;
+      color: #1a3a1a;
+      width: 80px;
+      border-right: 2px solid #e0d8c8;
+    }
+    tr.final td.letter-cell { color: #1a2a4a; }
+
+    /* Name cell */
+    td.name-cell {
+      font-size: 12px;
+      color: #6a5a3a;
+      width: 110px;
+      border-right: 1px solid #e8e0d0;
+    }
+    td.name-cell .heb {
+      font-family: "SBL Hebrew", "Ezra SIL", serif;
+      font-size: 13px;
+      color: #2a2010;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* Examples cell */
+    td.examples-cell {
+      padding: 8px 14px;
+    }
+    .examples-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    /* Individual word example */
+    .word-example {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .word-example img {
+      height: 48px;
+      max-width: 120px;
+      object-fit: contain;
+      border: 1px solid #c8bea8;
+      border-radius: 3px;
+      background: #f8f4ec;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .word-example img:hover {
+      border-color: #8a7a5a;
+      box-shadow: 0 2px 6px rgba(80,60,20,0.20);
+    }
+    .word-example img.loading { opacity: 0.4; }
+    .word-example img.error   { display: none; }
+    .word-example .err-badge  {
+      font-size: 9px; color: #c44;
+      display: none;
+    }
+    .word-example img.error + .err-badge { display: block; }
+
+    .word-label {
+      font-family: "SBL Hebrew", "Ezra SIL", serif;
+      font-size: 13px;
+      color: #4a3a20;
+      direction: rtl;
+    }
+    .folio-label {
+      font-size: 9px;
+      color: #9a8a70;
+    }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    #lightbox.active { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border: 3px solid white;
+      border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    #lightbox-caption {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: "SBL Hebrew", serif;
+      direction: rtl;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 11px;
+      color: #9a8a70;
+      border-top: 1px solid #d8cfc0;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="header-row">
+    <div>
+      <div class="sub">MiDRASH Project · ERC · EPHE-PSL Paris</div>
+      <h1>Paleographic Alphabet — Vatican MS Ebr. 108</h1>
+      <div class="desc">
+        27 Hebrew letters · 5 attestations each · all examples drawn from actual manuscript words · images from Vatican IIIF
+      </div>
+    </div>
+    <a href="index.html" class="back-link">← Annotation Tool</a>
+  </div>
+</header>
+
+<div style="max-width:1100px;margin:14px auto 0;padding:0 24px;">
+  <div class="legend">
+    Each row shows the letter as it appears in MS Ebr. 108, taken from 5 different words in the manuscript.
+    Click any image to enlarge. Word label shown below each crop; folio reference in grey.
+    Images load directly from the Vatican Digital Library IIIF server.
+  </div>
+</div>
+
+<!-- ── Alphabet Table ── -->
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th class="letter-col">Letter</th>
+        <th class="name-col">Name</th>
+        <th>Attestations in MS Ebr. 108</th>
+      </tr>
+    </thead>
+    <tbody id="alphabet-body">
+      <!-- filled by JS -->
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Lightbox ── -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<footer>
+  Vatican MS Ebr. 108 · Talmud Bavli · Images © Biblioteca Apostolica Vaticana ·
+  MiDRASH Project (ERC, EPHE-PSL) · Tool by Avichai Levy
+</footer>
+
+<script>
+// ── ALPHABET DATA ────────────────────────────────────────────────────────────
+const ALPHABET = [
+  { letter:"א", name:"Alef", final:false, examples:[
+    { word:"את", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/716,1499,73,108/full/0/default.jpg" },
+    { word:"אם", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1493,1866,71,105/full/0/default.jpg" },
+    { word:"או", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1065,1376,67,100/full/0/default.jpg" },
+    { word:"אף", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/1391,1612,64,109/full/0/default.jpg" },
+    { word:"אל", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/905,2042,64,125/full/0/default.jpg" },
+  ]},
+  { letter:"ב", name:"Bet", final:false, examples:[
+    { word:"בן", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/916,1192,62,96/full/0/default.jpg" },
+    { word:"בא", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/405,1999,58,109/full/0/default.jpg" },
+    { word:"בר", folio:"0098v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0200_fa_0098v.jp2/657,493,58,120/full/0/default.jpg" },
+    { word:"בה", folio:"0098v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0200_fa_0098v.jp2/771,2027,58,129/full/0/default.jpg" },
+    { word:"רב", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/780,1747,57,93/full/0/default.jpg" },
+  ]},
+  { letter:"ג", name:"Gimel", final:false, examples:[
+    { word:"גו", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1178,1974,65,109/full/0/default.jpg" },
+    { word:"גמי", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/295,1195,79,113/full/0/default.jpg" },
+    { word:"גבר", folio:"0092v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0188_fa_0092v.jp2/863,1773,78,104/full/0/default.jpg" },
+    { word:"גסה", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/1125,829,75,102/full/0/default.jpg" },
+    { word:"גבי", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1378,878,75,109/full/0/default.jpg" },
+  ]},
+  { letter:"ד", name:"Dalet", final:false, examples:[
+    { word:"עד", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1323,1558,65,115/full/0/default.jpg" },
+    { word:"צד", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1438,1919,62,95/full/0/default.jpg" },
+    { word:"חד", folio:"0092v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0188_fa_0092v.jp2/1081,1171,62,105/full/0/default.jpg" },
+    { word:"דם", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/879,910,57,98/full/0/default.jpg" },
+    { word:"דן", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/563,404,57,85/full/0/default.jpg" },
+  ]},
+  { letter:"ה", name:"He", final:false, examples:[
+    { word:"הת", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/689,1610,67,102/full/0/default.jpg" },
+    { word:"מה", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/726,625,64,95/full/0/default.jpg" },
+    { word:"הא", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1194,1667,62,106/full/0/default.jpg" },
+    { word:"הו", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1405,1851,58,104/full/0/default.jpg" },
+    { word:"לה", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/694,1922,58,122/full/0/default.jpg" },
+  ]},
+  { letter:"ו", name:"Vav", final:false, examples:[
+    { word:"או", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1065,1376,67,100/full/0/default.jpg" },
+    { word:"גו", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1178,1974,65,109/full/0/default.jpg" },
+    { word:"הו", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1405,1851,58,104/full/0/default.jpg" },
+    { word:"לו", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1044,1230,56,108/full/0/default.jpg" },
+    { word:"דו", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/530,1920,55,117/full/0/default.jpg" },
+  ]},
+  { letter:"ז", name:"Zayin", final:false, examples:[
+    { word:"זה", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/945,1157,51,89/full/0/default.jpg" },
+    { word:"זו", folio:"0097r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0197_fa_0097r.jp2/597,1495,50,98/full/0/default.jpg" },
+    { word:"מזל", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1657,1473,85,113/full/0/default.jpg" },
+    { word:"זמר", folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/571,805,83,116/full/0/default.jpg" },
+    { word:"זמן", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1248,552,79,102/full/0/default.jpg" },
+  ]},
+  { letter:"ח", name:"Het", final:false, examples:[
+    { word:"טח", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/458,1961,63,106/full/0/default.jpg" },
+    { word:"חד", folio:"0092v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0188_fa_0092v.jp2/1081,1171,62,105/full/0/default.jpg" },
+    { word:"חר", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/390,1506,56,106/full/0/default.jpg" },
+    { word:"חך", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1613,1070,56,101/full/0/default.jpg" },
+    { word:"שחת", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/936,958,102,107/full/0/default.jpg" },
+  ]},
+  { letter:"ט", name:"Tet", final:false, examples:[
+    { word:"טע", folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1824,1490,63,118/full/0/default.jpg" },
+    { word:"טח", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/458,1961,63,106/full/0/default.jpg" },
+    { word:"טל", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/1511,355,61,111/full/0/default.jpg" },
+    { word:"טעם", folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/781,1196,97,110/full/0/default.jpg" },
+    { word:"טמח", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/839,1697,95,96/full/0/default.jpg" },
+  ]},
+  { letter:"י", name:"Yod", final:false, examples:[
+    { word:"מי", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/818,1303,66,111/full/0/default.jpg" },
+    { word:"אי", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1413,764,62,99/full/0/default.jpg" },
+    { word:"כי", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/1549,1874,56,92/full/0/default.jpg" },
+    { word:"בי", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/857,1865,56,108/full/0/default.jpg" },
+    { word:"לי", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/654,2018,56,105/full/0/default.jpg" },
+  ]},
+  { letter:"כ", name:"Kaf", final:false, examples:[
+    { word:"כל", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1278,297,59,107/full/0/default.jpg" },
+    { word:"כן", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1209,1428,57,103/full/0/default.jpg" },
+    { word:"כך", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/731,1629,57,117/full/0/default.jpg" },
+    { word:"כי", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/1549,1874,56,92/full/0/default.jpg" },
+    { word:"כו", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1591,1602,50,117/full/0/default.jpg" },
+  ]},
+  { letter:"ל", name:"Lamed", final:false, examples:[
+    { word:"על", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1160,1489,76,123/full/0/default.jpg" },
+    { word:"של", folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/1554,565,75,102/full/0/default.jpg" },
+    { word:"אל", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/905,2042,64,125/full/0/default.jpg" },
+    { word:"לא", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/754,858,63,93/full/0/default.jpg" },
+    { word:"טל", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/1511,355,61,111/full/0/default.jpg" },
+  ]},
+  { letter:"מ", name:"Mem", final:false, examples:[
+    { word:"מר", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/857,978,68,95/full/0/default.jpg" },
+    { word:"מי", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/818,1303,66,111/full/0/default.jpg" },
+    { word:"מת", folio:"0093v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0190_fa_0093v.jp2/519,1281,64,89/full/0/default.jpg" },
+    { word:"מן", folio:"0097r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0197_fa_0097r.jp2/1494,1575,64,98/full/0/default.jpg" },
+    { word:"מה", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/726,625,64,95/full/0/default.jpg" },
+  ]},
+  { letter:"נ", name:"Nun", final:false, examples:[
+    { word:"מנ", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1575,1368,61,103/full/0/default.jpg" },
+    { word:"נה", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/1158,447,45,55/full/0/default.jpg" },
+    { word:"שנא", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1416,1692,97,98/full/0/default.jpg" },
+    { word:"נסב", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/750,1922,87,136/full/0/default.jpg" },
+    { word:"טנח", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/1296,1742,87,107/full/0/default.jpg" },
+  ]},
+  { letter:"ס", name:"Samekh", final:false, examples:[
+    { word:"סת", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/1457,878,54,105/full/0/default.jpg" },
+    { word:"סאה", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1072,1510,90,100/full/0/default.jpg" },
+    { word:"אסר", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1096,1477,89,113/full/0/default.jpg" },
+    { word:"נסב", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/750,1922,87,136/full/0/default.jpg" },
+    { word:"סתר", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1105,715,83,114/full/0/default.jpg" },
+  ]},
+  { letter:"ע", name:"Ayin", final:false, examples:[
+    { word:"על", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1160,1489,76,123/full/0/default.jpg" },
+    { word:"עד", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1323,1558,65,115/full/0/default.jpg" },
+    { word:"עם", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/635,1370,64,110/full/0/default.jpg" },
+    { word:"טע", folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1824,1490,63,118/full/0/default.jpg" },
+    { word:"שמע", folio:"0098v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0200_fa_0098v.jp2/1280,737,102,107/full/0/default.jpg" },
+  ]},
+  { letter:"פ", name:"Pe", final:false, examples:[
+    { word:"פטא", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/1426,732,88,92/full/0/default.jpg" },
+    { word:"פפא", folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1419,1504,86,108/full/0/default.jpg" },
+    { word:"טפח", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/763,1296,86,89/full/0/default.jpg" },
+    { word:"ספא", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1703,1366,83,104/full/0/default.jpg" },
+    { word:"פפי", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/1227,469,80,112/full/0/default.jpg" },
+  ]},
+  { letter:"צ", name:"Tsadi", final:false, examples:[
+    { word:"צר", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/704,1959,63,103/full/0/default.jpg" },
+    { word:"צד", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1438,1919,62,95/full/0/default.jpg" },
+    { word:"צא", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/793,1423,62,104/full/0/default.jpg" },
+    { word:"עצם", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1215,1833,90,107/full/0/default.jpg" },
+    { word:"מצי", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1139,918,89,116/full/0/default.jpg" },
+  ]},
+  { letter:"ק", name:"Qof", final:false, examples:[
+    { word:"קא", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1424,582,61,97/full/0/default.jpg" },
+    { word:"קם", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1117,1744,59,94/full/0/default.jpg" },
+    { word:"קב", folio:"0092v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0188_fa_0092v.jp2/1344,1228,55,111/full/0/default.jpg" },
+    { word:"קמח", folio:"0092v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0188_fa_0092v.jp2/1396,388,99,111/full/0/default.jpg" },
+    { word:"קשא", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/286,1356,89,112/full/0/default.jpg" },
+  ]},
+  { letter:"ר", name:"Resh", final:false, examples:[
+    { word:"מר", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/857,978,68,95/full/0/default.jpg" },
+    { word:"צר", folio:"0099v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0202_fa_0099v.jp2/704,1959,63,103/full/0/default.jpg" },
+    { word:"בר", folio:"0098v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0200_fa_0098v.jp2/657,493,58,120/full/0/default.jpg" },
+    { word:"רב", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/780,1747,57,93/full/0/default.jpg" },
+    { word:"חר", folio:"0097v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0198_fa_0097v.jp2/390,1506,56,106/full/0/default.jpg" },
+  ]},
+  { letter:"ש", name:"Shin", final:false, examples:[
+    { word:"של", folio:"0095v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0194_fa_0095v.jp2/1554,565,75,102/full/0/default.jpg" },
+    { word:"שם", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/921,1574,71,105/full/0/default.jpg" },
+    { word:"רש", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/721,1357,55,117/full/0/default.jpg" },
+    { word:"יש", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1167,1419,50,103/full/0/default.jpg" },
+    { word:"אשו", folio:"0096v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0196_fa_0096v.jp2/1193,1908,107,119/full/0/default.jpg" },
+  ]},
+  { letter:"ת", name:"Tav", final:false, examples:[
+    { word:"את", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/716,1499,73,108/full/0/default.jpg" },
+    { word:"הת", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/689,1610,67,102/full/0/default.jpg" },
+    { word:"מת", folio:"0093v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0190_fa_0093v.jp2/519,1281,64,89/full/0/default.jpg" },
+    { word:"סת", folio:"0096r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0195_fa_0096r.jp2/1457,878,54,105/full/0/default.jpg" },
+    { word:"תב", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/601,1951,49,97/full/0/default.jpg" },
+  ]},
+  { letter:"ך", name:"Kaf sofit", final:true, examples:[
+    { word:"כך", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/731,1629,57,117/full/0/default.jpg" },
+    { word:"לך", folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1088,719,56,114/full/0/default.jpg" },
+    { word:"חך", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1613,1070,56,101/full/0/default.jpg" },
+    { word:"דך", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1332,429,55,108/full/0/default.jpg" },
+    { word:"שלך", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1851,1479,95,98/full/0/default.jpg" },
+  ]},
+  { letter:"ם", name:"Mem sofit", final:true, examples:[
+    { word:"אם", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/1493,1866,71,105/full/0/default.jpg" },
+    { word:"שם", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/921,1574,71,105/full/0/default.jpg" },
+    { word:"עם", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/635,1370,64,110/full/0/default.jpg" },
+    { word:"קם", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1117,1744,59,94/full/0/default.jpg" },
+    { word:"דם", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/879,910,57,98/full/0/default.jpg" },
+  ]},
+  { letter:"ן", name:"Nun sofit", final:true, examples:[
+    { word:"מן", folio:"0097r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0197_fa_0097r.jp2/1494,1575,64,98/full/0/default.jpg" },
+    { word:"בן", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/916,1192,62,96/full/0/default.jpg" },
+    { word:"הן", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/716,2042,57,122/full/0/default.jpg" },
+    { word:"דן", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/563,404,57,85/full/0/default.jpg" },
+    { word:"כן", folio:"0094v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0192_fa_0094v.jp2/1209,1428,57,103/full/0/default.jpg" },
+  ]},
+  { letter:"ף", name:"Pe sofit", final:true, examples:[
+    { word:"אף", folio:"0091v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0186_fa_0091v.jp2/1391,1612,64,109/full/0/default.jpg" },
+    { word:"ואף", folio:"0093r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0189_fa_0093r.jp2/1455,1216,80,113/full/0/default.jpg" },
+    { word:"סוף", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/1329,1081,72,101/full/0/default.jpg" },
+    { word:"עיף", folio:"0095r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0193_fa_0095r.jp2/737,940,71,96/full/0/default.jpg" },
+    { word:"יוסף", folio:"0092r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0187_fa_0092r.jp2/1819,1893,91,108/full/0/default.jpg" },
+  ]},
+  { letter:"ץ", name:"Tsadi sofit", final:true, examples:[
+    { word:"ארץ", folio:"0099r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0201_fa_0099r.jp2/1588,1589,82,84/full/0/default.jpg" },
+    { word:"נעץ", folio:"0091r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0185_fa_0091r.jp2/826,1546,76,109/full/0/default.jpg" },
+    { word:"חוץ", folio:"0093v", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0190_fa_0093v.jp2/880,1954,68,107/full/0/default.jpg" },
+    { word:"יוץ", folio:"0094r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0191_fa_0094r.jp2/580,1606,66,106/full/0/default.jpg" },
+    { word:"לקוץ", folio:"0098r", url:"https://digi.vatlib.it/iiifimage/MSS_Vat.ebr.108/Vat.ebr.108_0199_fa_0098r.jp2/1801,1456,108,102/full/0/default.jpg" },
+  ]},
+];
+
+// ── Build table ──────────────────────────────────────────────────────────────
+const tbody = document.getElementById('alphabet-body');
+
+ALPHABET.forEach(({ letter, name, final: isFinal, examples }) => {
+  const tr = document.createElement('tr');
+  if (isFinal) tr.classList.add('final');
+
+  // Letter cell
+  const tdLetter = document.createElement('td');
+  tdLetter.className = 'letter-cell';
+  tdLetter.textContent = letter;
+  tr.appendChild(tdLetter);
+
+  // Name cell
+  const tdName = document.createElement('td');
+  tdName.className = 'name-cell';
+  tdName.innerHTML = `<span class="heb">${letter}</span>${name}${isFinal ? ' <em style="font-size:10px;color:#9a8a70">(final)</em>' : ''}`;
+  tr.appendChild(tdName);
+
+  // Examples cell
+  const tdEx = document.createElement('td');
+  tdEx.className = 'examples-cell';
+  const row = document.createElement('div');
+  row.className = 'examples-row';
+
+  examples.forEach(({ word, folio, url }) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'word-example';
+
+    const img = document.createElement('img');
+    img.referrerPolicy = 'no-referrer';
+    img.src = url;
+    img.alt = word;
+    img.className = 'loading';
+    img.title = `${word} — f.${folio}`;
+    img.onload  = () => img.classList.remove('loading');
+    img.onerror = () => { img.classList.add('error'); img.classList.remove('loading'); };
+    img.onclick = () => openLightbox(url, word, folio);
+
+    const errBadge = document.createElement('span');
+    errBadge.className = 'err-badge';
+    errBadge.textContent = '✗';
+
+    const wordLabel = document.createElement('div');
+    wordLabel.className = 'word-label';
+    wordLabel.textContent = word;
+
+    const folioLabel = document.createElement('div');
+    folioLabel.className = 'folio-label';
+    folioLabel.textContent = `f.${folio}`;
+
+    wrap.appendChild(img);
+    wrap.appendChild(errBadge);
+    wrap.appendChild(wordLabel);
+    wrap.appendChild(folioLabel);
+    row.appendChild(wrap);
+  });
+
+  tdEx.appendChild(row);
+  tr.appendChild(tdEx);
+  tbody.appendChild(tr);
+});
+
+// ── Lightbox ─────────────────────────────────────────────────────────────────
+function openLightbox(url, word, folio) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox-caption').textContent = `${word}  ·  f.${folio}  ·  Vat. Ebr. 108`;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+</body>
+</html>
